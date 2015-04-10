@@ -59,7 +59,7 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
       ts('Name') => 'sort_name',
       ts('Phone') => 'phone',
       ts('Email') => 'email',
-      ts('Date of visit') => CIVICRM_COLUMN,
+      ts('Date of visit') => CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME,
     );
     return $columns;
   }
@@ -92,7 +92,7 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
       phone.phone ,
       email.email  ,
       date.
-    " . CIVICRM_COLUMN;
+    " . CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME;
   }
 
   /**
@@ -106,7 +106,7 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
       LEFT JOIN civicrm_activity_contact a ON (a.contact_id = contact_a.id)
       LEFT JOIN civicrm_phone phone ON (phone.contact_id = contact_a.id)
       LEFT JOIN civicrm_email email ON (email.contact_id = contact_a.id)
-      LEFT JOIN " . CIVICRM_TABLE . " date ON (date.entity_id = contact_a.id)
+      LEFT JOIN " . CIVICRM_GUESTSEARCH_CUSTOM_TABLE_NAME . " date ON (date.entity_id = contact_a.id)
     ";
   }
 
@@ -119,7 +119,7 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
   function where($includeContactIDs = false) {
     $params = array();
 
-    $where = "contact_a.contact_sub_type = 'Guest' AND activity_id IS NULL ORDER BY date." . CIVICRM_COLUMN . " ASC ";
+    $where = "contact_a.contact_sub_type = 'Guest' AND activity_id IS NULL ORDER BY date." . CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME . " ASC ";
 
     return $where;
 
