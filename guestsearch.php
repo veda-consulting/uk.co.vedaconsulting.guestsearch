@@ -1,7 +1,7 @@
 <?php
 
 require_once 'guestsearch.civix.php';
-define('CIVICRM_GUESTSEARCH_CUSTOM_TABLE_NAME','civicrm_value_date_of_first_visit_4');
+define('CIVICRM_GUESTSEARCH_CUSTOM_TABLE_NAME','civicrm_value_date_of_first_visit_6');
 define('CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME','date_of_first_visit_7');
 
 
