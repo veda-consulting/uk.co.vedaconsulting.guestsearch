@@ -1,21 +1,66 @@
 <?php
+/*
+ +--------------------------------------------------------------------+
+ | CiviCRM version 4.6                                                |
+ +--------------------------------------------------------------------+
+ | Copyright CiviCRM LLC (c) 2004-2015                                |
+ +--------------------------------------------------------------------+
+ | This file is a part of CiviCRM.                                    |
+ |                                                                    |
+ | CiviCRM is free software; you can copy, modify, and distribute it  |
+ | under the terms of the GNU Affero General Public License           |
+ | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
+ |                                                                    |
+ | CiviCRM is distributed in the hope that it will be useful, but     |
+ | WITHOUT ANY WARRANTY; without even the implied warranty of         |
+ | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
+ | See the GNU Affero General Public License for more details.        |
+ |                                                                    |
+ | You should have received a copy of the GNU Affero General Public   |
+ | License and the CiviCRM Licensing Exception along                  |
+ | with this program; if not, contact CiviCRM LLC                     |
+ | at info[AT]civicrm[DOT]org. If you have questions about the        |
+ | GNU Affero General Public License or the licensing of CiviCRM,     |
+ | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ +--------------------------------------------------------------------+
+ */
 
 /**
- * A custom contact search
+ *
+ * @package CRM
+ * @copyright CiviCRM LLC (c) 2004-2015
+ * $Id$
+ *
  */
 class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Custom_Base implements CRM_Contact_Form_Search_Interface {
-
-  function __construct(&$formValues) {
+  /**
+   * @param $formValues
+   */
+  public function __construct(&$formValues) {
     parent::__construct($formValues);
+
+    if (!isset($formValues['state_province_id'])) {
+      $this->_stateID = CRM_Utils_Request::retrieve('stateID', 'Integer',
+        CRM_Core_DAO::$_nullObject
+      );
+      if ($this->_stateID) {
+        $formValues['state_province_id'] = $this->_stateID;
+      }
+    }
+
+    $this->_columns = array(
+      ts('Contact ID') => 'contact_id',
+      ts('Contact Type') => 'contact_type',
+      ts('Name') => 'sort_name',
+      ts('State') => 'state_province',
+    );
   }
 
   /**
-   * Prepare a set of search fields
-   *
-   * @param CRM_Core_Form $form modifiable
-   * @return void
+   * @param CRM_Core_Form $form
    */
-  function buildForm(&$form) {
+  public function buildForm(&$form) {
+
     CRM_Utils_System::setTitle(ts('My Search Title'));
 
 
@@ -31,27 +76,21 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
      * are part of the search criteria
      */
     $form->assign('elements', array('name'));
+
+    /**
+     * You can define a custom title for the search form
+     */
+   // $this->setTitle('My Search Title');
+
+    /**
+     * if you are using the standard template, this array tells the template what elements
+     * are part of the search criteria
+     */
+   // $form->assign('elements', array('household_name', 'state_province_id'));
   }
 
   /**
-   * Get a list of summary data points
-   *
-   * @return mixed; NULL or array with keys:
-   *  - summary: string
-   *  - total: numeric
-   */
-  function summary() {
-    return NULL;
-    // return array(
-    //   'summary' => 'This is a summary',
-    //   'total' => 50.0,
-    // );
-  }
-
-  /**
-   * Get a list of displayable columns
-   *
-   * @return array, keys are printable column headers and values are SQL column names
+   * @return array
    */
   function &columns() {
     // return by reference
@@ -65,27 +104,33 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
   }
 
   /**
-   * Construct a full SQL query which returns one page worth of results
+   * @param int $offset
+   * @param int $rowcount
+   * @param null $sort
+   * @param bool $returnSQL
    *
+   * @return string
+   */
+  public function contactIDs($offset = 0, $rowcount = 0, $sort = NULL, $returnSQL = FALSE) {
+    return $this->all($offset, $rowcount, null, FALSE, TRUE);
+  }
+
+  /**
    * @param int $offset
    * @param int $rowcount
    * @param null $sort
    * @param bool $includeContactIDs
    * @param bool $justIDs
-   * @return string, sql
-   */
-  function all($offset = 0, $rowcount = 0, $sort = NULL, $includeContactIDs = FALSE, $justIDs = FALSE) {
-
-    return $this->sql($this->select(), $offset, $rowcount, null, $includeContactIDs, NULL);
-  }
-
-  /**
-   * Construct a SQL SELECT clause
    *
-   * @return string, sql fragment with SELECT arguments
+   * @return string
    */
-  function select() {
-    return "
+  public function all($offset = 0, $rowcount = 0, $sort = NULL, $includeContactIDs = FALSE, $justIDs = FALSE) {
+    if ($justIDs) {
+      $selectClause = "contact_a.id as contact_id";
+      $sort = 'contact_a.id';
+    }
+    else {
+      $selectClause = "
       contact_a.id                  as contact_id  ,
       contact_a.contact_sub_type    as contact_sub_type,
       contact_a.sort_name           as sort_name,
@@ -93,12 +138,22 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
       email.email  ,
       date.
     " . CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME;
+    }
+
+    return $this->sql($selectClause,
+      $offset, $rowcount, NULL,
+      $includeContactIDs, NULL
+    );
   }
 
   /**
-   * Construct a SQL FROM clause
+   * @return string
+   */
+
+  /**
+   * @param bool $includeContactIDs
    *
-   * @return string, sql fragment with FROM and JOIN clauses
+   * @return string
    */
   function from() {
     return "
@@ -109,36 +164,44 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
       LEFT JOIN " . CIVICRM_GUESTSEARCH_CUSTOM_TABLE_NAME . " date ON (date.entity_id = contact_a.id)
     ";
   }
-
-  /**
-   * Construct a SQL WHERE clause
-   *
-   * @param bool $includeContactIDs
-   * @return string, sql fragment with conditional expressions
-   */
   function where($includeContactIDs = false) {
     $params = array();
-
     $where = "contact_a.contact_sub_type = 'Guest' AND activity_id IS NULL ORDER BY date." . CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME . " ASC ";
-
     return $where;
-
   }
 
   /**
-   * Determine the Smarty template for the search screen
-   *
-   * @return string, template path (findable through Smarty template path)
+   * @return string
    */
-  function templateFile() {
+  public function templateFile() {
     return 'CRM/Contact/Form/Search/Custom.tpl';
   }
 
   /**
-   * Modify the content of each row
-   *
-   * @param array $row modifiable SQL result row
-   * @return void
+   * @return array
    */
+  public function setDefaultValues() {
+    /*return array(
+      'household_name' => '',
+    );*/
+  }
 
+  /**
+   * @param $row
+   */
+  public function alterRow(&$row) {
+    //$row['sort_name'] .= ' ( altered )';
+  }
+
+  /**
+   * @param $title
+   */
+  public function setTitle($title) {
+    /*if ($title) {
+      CRM_Utils_System::setTitle($title);
+    }
+    else {
+      CRM_Utils_System::setTitle(ts('Search'));
+    }*/
+  }
 }
