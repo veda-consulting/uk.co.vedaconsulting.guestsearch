@@ -16,16 +16,16 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
    * @return void
    */
   function buildForm(&$form) {
-    CRM_Utils_System::setTitle(ts('My Search Title'));
+    CRM_Utils_System::setTitle(ts('Recently Registered Guest (Unassigned)'));
 
 
-    $form->add('text', 'name', ts('Name'), TRUE
+/*    $form->add('text', 'name', ts('Name'), TRUE
     );
 
     $form->setDefaults(array(
       'name' => '',
     ));
-
+*/
     /**
      * if you are using the standard template, this array tells the template what elements
      * are part of the search criteria
@@ -56,6 +56,7 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
   function &columns() {
     // return by reference
     $columns = array(
+      ts('Contact Type') => 'contact_sub_type',
       ts('Name') => 'sort_name',
       ts('Phone') => 'phone',
       ts('Email') => 'email',
@@ -75,8 +76,9 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
    * @return string, sql
    */
   function all($offset = 0, $rowcount = 0, $sort = NULL, $includeContactIDs = FALSE, $justIDs = FALSE) {
-
-    return $this->sql($this->select(), $offset, $rowcount, null, $includeContactIDs, NULL);
+    // SELECT clause must include contact_id as an alias for civicrm_contact.id
+    $sort = "date." . CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME;
+    return $this->sql($this->select(), $offset, $rowcount, $sort, $includeContactIDs, NULL);
   }
 
   /**
@@ -119,7 +121,7 @@ class CRM_Guestsearch_Form_Search_Guestsearch extends CRM_Contact_Form_Search_Cu
   function where($includeContactIDs = false) {
     $params = array();
 
-    $where = "contact_a.contact_sub_type = 'Guest' AND activity_id IS NULL ORDER BY date." . CIVICRM_GUESTSEARCH_CUSTOM_COLUMN_NAME . " ASC ";
+    $where = "contact_a.contact_sub_type = 'Guest' AND activity_id IS NULL";
 
     return $where;
 
